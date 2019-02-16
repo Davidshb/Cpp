@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/david/OneDrive - UQAM/HIVER 2019/INF3105/TP1/main.cpp
+utility
+-
+iostream
+-
+map
+-
+regex
+-
+cstdlib
+-
+algorithm
+-
+string.h
+-
+time.h
+-
+
