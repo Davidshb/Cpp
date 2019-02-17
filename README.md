@@ -17,3 +17,5 @@ g++ main.cpp -lm -std=c++11
 ```
 ./a.out -h
 ```
+
+## Commande list

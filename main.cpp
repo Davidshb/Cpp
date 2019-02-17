@@ -6,15 +6,7 @@
 #include <algorithm>
 #include <string.h>
 #include <time.h>
-clock_t getword_ = 0;
-clock_t representant_ = 0;
-clock_t representant2_ = 0;
-clock_t setRang_ = 0;
-clock_t retirer_ = 0;
-clock_t estAlphabetic_ = 0;
-clock_t decoup = 0;
-clock_t ajout = 0;
-clock_t executeur = 0;
+
 using namespace std;
 
 /*
@@ -33,18 +25,6 @@ static inline void ltrim(string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
         return !std::isspace(ch);
     }));
-}
-
-// trim from end (in place)
-static inline void rtrim(string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
-}
-
-static inline void trim(string &s){
-    ltrim(s);
-    rtrim(s);
 }
 
 class Element {
@@ -82,28 +62,20 @@ public:
      * aucune optimisation n'est faite. Même si la variable globale optimisation est mis à true
     */
     Element * representant() {
-        clock_t tmp = clock();
         Element * res;
         if(optimisation)
             res = representant_Opt();
         else
             res = representant_NoOpt();
-        representant_ += clock() - tmp;
         return res;
     };
 
-    //cette méthode renvoie l'élement dans la chaine de représentant qui a le rang i
-    string representant(Element * id) {
-        clock_t t = clock();
+    //
+    string parent_commun(Element * id) {
         string res = "Pas d'identificateur commun";
-        Element * tmp = suivant;
-        Element * tmp2 = id->suivant;
-        int i1, i2;
-
-        if(tmp != nullptr && tmp2 != nullptr){
-            i1 = tmp->rang;
-            i2 = tmp2->rang;
-        }
+        Element * tmp = this;
+        Element * tmp2 = id;
+        int i1 = tmp->rang, i2 = tmp2->rang;
 
 
         while(tmp != nullptr && tmp2 != nullptr) {
@@ -124,7 +96,6 @@ public:
             }
 
         }
-        representant2_ += clock() - t;
         return res;
     }
 
@@ -137,7 +108,6 @@ public:
 
     //setteur du rang
     void setRang(int rang_) {
-        clock_t t = clock();
         Element * tmp = suivant;
         rang = rang_;
         while(tmp != nullptr) {
@@ -148,7 +118,6 @@ public:
             rang_ = tmp->rang;
             tmp = tmp->suivant;
         }
-        setRang_ += clock() - t;
     }
 
     //getteur du rang
@@ -176,14 +145,13 @@ private:
     deque<string> elem;
     int mot_cle;
     int type;
+    map<string, Element* > m;
 
     bool estAlphabetic(const string & s) {
-        clock_t tmp = clock();
         bool res = true;
         for (char it : s)
             if(!isalpha(it))
                 res = false;
-        estAlphabetic_ += clock() - tmp;
         return res;
     }
 
@@ -191,7 +159,7 @@ private:
  * n'existe pas sinon elle renvoie l'élement existant.
  * test à true => elle vérifie l'existence de l'élément dans la map et la renvoie sinon elle retour un nullptr
 */
-    Element * ajoutElement(map<string, Element*> & m,const string & entree,bool test = false) {
+    Element * ajoutElement(const string & entree,bool test = false) {
         // on cherche l'élément dans la map
         auto it = m.find(entree);
         Element * res;
@@ -212,9 +180,9 @@ private:
     }
 
 // cette méthode vérifie l'égalité de 2 représentants de 2 éléments retourne vrai si c'est le cas faux sinon
-    bool ce_req(map<string, Element * > & m) {
+    bool ce_req() {
         string str1 = retirer(), str2 = retirer();
-        Element *id0 = ajoutElement(m,str1,true), *id1 = ajoutElement(m,str2,true);
+        Element *id0 = ajoutElement(str1,true), *id1 = ajoutElement(str2,true);
         if(id0 == nullptr || id1 == nullptr)
             erreur(2);
 
@@ -224,14 +192,14 @@ private:
 /* cette fonction ajoute les éléments dans la map qui se trouve dans le tableau de string. elle identifie
  * les représentants des éléments 1 à taille-1 égale à 0 dans cmd
  */
-    void rep_cmd(map<string, Element * > & m) {
+    void rep_cmd() {
         string str = retirer();
-        Element* representant = ajoutElement(m,str);
+        Element* representant = ajoutElement(str);
         unsigned long i, taille = this->taille();
         int j;
         for(i=0;i < taille; i++) {
             str = retirer();
-            Element * tmp = ajoutElement(m,str);
+            Element * tmp = ajoutElement(str);
             tmp->setSuivant(representant);
             if( representant->getRang() <= (j = tmp->getRang()) )
                 representant->setRang(j+1);
@@ -242,22 +210,22 @@ private:
  * cette fonction effectue la recherche d'un parent commun dans la liaison de 2 éléments dans la map. Si ces éléments
  * ne sont pas présents une erreur est retournée
  */
-    void rep_req2(map<string, Element * > & m) {
+    void rep_req2() {
         string str1 = retirer();
         string str2 = retirer();
-        Element *id0 = ajoutElement(m,str1,true), *id1 = ajoutElement(m,str2,true);
+        Element *id0 = ajoutElement(str1,true), *id1 = ajoutElement(str2,true);
 
         if(id0 == nullptr || id1 == nullptr)
             erreur(2);
         else
-            cout << id0->representant(id1) << endl;
+            cout << id0->parent_commun(id1) << endl;
     }
 
 /*
  * cette méthode retourne le représentant de cmd dans la map m
  */
-    void rep_req1(map<string, Element * > &m) {
-        Element *id = ajoutElement(m,retirer(),true);
+    void rep_req1() {
+        Element *id = ajoutElement(retirer(),true);
 
         if(id == nullptr) {
             erreur(2);
@@ -270,12 +238,12 @@ private:
 /*
  * en fonction des paramètres (taille) cette fonction en exécute une autre
  */
-    void rep_req(map<string, Element * > &m) {
+    void rep_req() {
         unsigned long taille = this->taille();
         if(taille == 1)
-            rep_req1(m);
+            rep_req1();
         else if(taille == 2)
-            rep_req2(m);
+            rep_req2();
         else
             erreur(1);
     }
@@ -283,8 +251,8 @@ private:
 /*
  * Cette fonction permet d'associer le representant d'un élément à un autre
  */
-    void ce_cmd(map<string, Element * > &m) {
-        Element *id0 = ajoutElement(m,retirer()), *id1 = ajoutElement(m,retirer());
+    void ce_cmd() {
+        Element *id0 = ajoutElement(retirer()), *id1 = ajoutElement(retirer());
         if(id0->representant()->getRang() < id1->representant()->getRang())
             id0->representant()->setSuivant(id1->representant());
         else if (id0->representant()->getRang() > id1->representant()->getRang())
@@ -306,16 +274,13 @@ public:
     }
 
     void ajouter(string & e) {
-        clock_t tr = clock();
         if(e.empty() || e == "rep" || e == "ce" || !estAlphabetic(e))
             erreur(1);
 
         elem.push_back(e);
-        ajout += clock() - tr;
     }
 
     string retirer() {
-        clock_t tmp = clock();
         string res;
         try {
             res = string(elem.front());
@@ -323,7 +288,6 @@ public:
             erreur(1);
         }
         elem.pop_front();
-        retirer_ += clock() - tmp;
         return res;
     }
 
@@ -345,16 +309,15 @@ public:
         return elem.size();
     }
 
-    void execution(map<string,Element*> & m) {
-        clock_t tmp = clock();
+    void execution() {
         if( (mot_cle == REP || mot_cle == NO) && type == CMD)
-            rep_cmd(m);
+            rep_cmd();
         else if(mot_cle == REP && type == REQ)
-            rep_req(m);
+            rep_req();
         else if(mot_cle == CE && type == CMD)
-            ce_cmd(m);
+            ce_cmd();
         else if(mot_cle == CE && type == REQ) {
-            if(ce_req(m))
+            if(ce_req())
                 cout << "oui" << endl;
             else
                 cout << "non" << endl;
@@ -362,33 +325,25 @@ public:
             erreur(1);
 
         effacer();
-        executeur += clock() - tmp;
+    }
+
+    void effacer_map() {
+        m.clear();
     }
 };
 
 string getWord(string & cmd) {
-    clock_t tmp = clock();
     ltrim(cmd);
-    string::size_type it = cmd.find(' ');
-
-    string res(cmd,0,it);
-    cmd.erase(0,it);
-    getword_ += clock() - tmp;
+    string res;
+    if(cmd[0] == ',' || cmd[0] == '?' || cmd[0] == '.') {
+        res = string(cmd,0,1);
+        cmd.erase(0,1);
+    }else {
+        auto it = cmd.find_first_of(" ?.,");
+        res = string(cmd,0,it);
+        cmd.erase(0,it);
+    }
     return res;
-}
-
-void insererEspaces(string & cmd) {
-    rtrim(cmd);
-    unsigned long taille = cmd.length(), i;
-    for(i=0;i<taille;i++)
-        if(cmd[i] == ',') {
-            cmd.insert(i++,1, ' ');
-            cmd.insert(++i,1, ' ');
-            taille += 2;
-        }else if(cmd[i] == '.' || cmd[i] == '?') {
-            cmd.insert(i++, 1, ' ');
-            taille++;
-        }
 }
 
 // je ne peux pas utiliser le regexp à cause de la version de g++ sur le serveur de l'uqam
@@ -410,16 +365,13 @@ bool match(const string &entree) {
 bool Element::optimisation = false;
 
 int main(int argc, char* argv[]) {
-    clock_t t1 = clock();
 
     if(argc == 2 && strcmp(argv[1],"-h") == 0)
         Element::optimisation = true;
 
-    map<string, Element *> m;
     Commande line;
     string cmd;
     while(cin && getline(cin,cmd)) {
-        clock_t dec = clock();
         string word;
         if(!cmd.find_first_of("?."))
             while(cin && getline(cin,word)) {
@@ -431,7 +383,6 @@ int main(int argc, char* argv[]) {
             break;
         cmd += word;
 
-        insererEspaces(cmd);
         word = getWord(cmd);
 
         if(word == "rep") {
@@ -506,25 +457,27 @@ int main(int argc, char* argv[]) {
 
         if(!getWord(cmd).empty())
             erreur(1);
-        decoup += clock() - dec;
-        line.execution(m);
 
-        //afficher(m);
+        line.execution();
     }
 
-    m.clear();
+    line.effacer_map();
 
-    t1 = clock() - t1;
-
+/*
     cerr << "getword " << getword_/CLOCKS_PER_SEC << endl;
+    cerr << "ajout element " << ajout_element_/CLOCKS_PER_SEC << endl;
+    cerr << "rep cmd " << rep_cmd_/CLOCKS_PER_SEC << endl;
+    cerr << "rep req 1 " << rep_req1_/CLOCKS_PER_SEC << endl;
+    cerr << "rep req 2 " << rep_req2_/CLOCKS_PER_SEC << endl;
+    cerr << "ce req " << ce_req_/CLOCKS_PER_SEC << endl;
+    cerr << "ce cmd " << ce_cmd_/CLOCKS_PER_SEC << endl;
     cerr << "representant1 " <<  representant_/CLOCKS_PER_SEC << endl;
-    cerr << "setRang " <<  setRang_/CLOCKS_PER_SEC << endl;
     cerr << "retirer " <<  retirer_/CLOCKS_PER_SEC << endl;
-    cerr << "representant2 " <<  representant2_/CLOCKS_PER_SEC << endl;
+    cerr << "representant2 " <<  parnet_commun/CLOCKS_PER_SEC << endl;
     cerr << "estAlphabetic_" <<  estAlphabetic_/CLOCKS_PER_SEC << endl;
     cerr << "ajoutLigne" <<  ajout/CLOCKS_PER_SEC << endl;
     cerr << "traitement " <<  (decoup-getword_)/CLOCKS_PER_SEC << endl;
-    cerr << "execution " <<  (executeur)/CLOCKS_PER_SEC << endl;
-    cerr << t1/CLOCKS_PER_SEC << endl;
+    cerr << "execution " <<  (executeur-ce_cmd_-ce_req_-rep_cmd_-rep_req1_-rep_req2_)/CLOCKS_PER_SEC << endl;
+    cerr << t1/CLOCKS_PER_SEC << endl;*/
     return 0;
 }
