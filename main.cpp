@@ -253,13 +253,14 @@ private:
  */
     void ce_cmd() {
         Element *id0 = ajoutElement(retirer()), *id1 = ajoutElement(retirer());
-        if(id0->representant()->getRang() < id1->representant()->getRang())
+        int i0 = id0->representant()->getRang(), i1 = id1->representant()->getRang();
+        if(i0 < i1)
             id0->representant()->setSuivant(id1->representant());
-        else if (id0->representant()->getRang() > id1->representant()->getRang())
+        else if (i0 > i1)
             id1->representant()->setSuivant(id0->representant());
         else {
             id1->setSuivant(id0->representant());
-            id0->setRang(id0->getRang()+1);
+            id0->setRang(i0+1);
         }
     }
 public:
@@ -335,7 +336,8 @@ public:
 string getWord(string & cmd) {
     ltrim(cmd);
     string res;
-    if(cmd[0] == ',' || cmd[0] == '?' || cmd[0] == '.') {
+    char c = cmd[0];
+    if(c == ',' || c == '?' || c == '.') {
         res = string(cmd,0,1);
         cmd.erase(0,1);
     }else {
@@ -461,6 +463,7 @@ int main(int argc, char* argv[]) {
         line.execution();
     }
 
+    //supprimer tous les objets de la map
     line.effacer_map();
 
 /*
